@@ -9,6 +9,10 @@ flowchart LR
     T --> M["models/*.joblib"]
     T -->|--write-back| W["F1_DB2<br/>ml.model_runs · ml.predictions"]
     W --> PBI["Power BI<br/>predictions vs actual"]
+    G -->|facts| L["f1ml.llm.narrate<br/>Ollama · qwen2.5-coder:3b"]
+    W -->|facts| L
+    L -->|verified text| N["F1_DB2<br/>ml.narratives"]
+    N --> PBI
 ```
 
 ## Models
@@ -23,6 +27,19 @@ flowchart LR
 | `pit_stop_ms` | Average pit-lane time per stop (2010+) | regressor | The team's average over its last 5 races |
 
 All models are scikit-learn `HistGradientBoosting`, which handles missing values natively (e.g. no qualifying time, a driver's first race at a circuit).
+
+## Results (test seasons 2023–2024, from `F1_DB2`)
+
+| Model | Key metric | Model | Baseline | Beats baseline |
+| --- | --- | --- | --- | --- |
+| `podium` | pr_auc | 0.706 | 0.664 | yes |
+| `finish_position` | spearman_per_race | 0.700 | 0.666 | yes |
+| `dnf` | pr_auc | 0.119 | 0.097 | yes |
+| `positions_gained` | mae | 2.250 | 2.811 | yes |
+| `pit_stop_class` | macro_f1 | 0.431 | 0.455 | **no** |
+| `pit_stop_ms` | mae | 2,469 | 3,549 | yes |
+
+`pit_stop_class` loses to its baseline on the test seasons (it wins 6 of 9 seasons in the 2016–2024 backtest), so the simple rule remains the better predictor until race-condition features exist. Full numbers: [`reports/metrics.json`](reports/metrics.json), [`reports/backtest.csv`](reports/backtest.csv) and one card per model in [`reports/model_cards/`](reports/model_cards).
 
 ## How it avoids fooling itself
 
@@ -86,6 +103,44 @@ ORDER BY r.round, p.probability DESC;
 
 Each `--write-back` adds two runs per model: `eval` (trained to 2022, predictions for the test seasons) and `prod` (trained on every completed season, predictions for the current season's completed races).
 
+## Local LLM narratives
+
+A small local model (`qwen2.5-coder:3b` via [Ollama](https://ollama.com)) writes short race recaps, driver-season summaries, prediction explanations and model reports. It is never trusted with facts:
+
+1. **SQL computes every fact.** A JSON *fact pack* is built from the gold views (podium, pole, fastest lap, biggest gain, retirements, ...), already rounded and labelled.
+2. **The model only writes prose** from that JSON, under a strict system prompt.
+3. **A verifier checks the text.** Every number (including `P3`, `3rd`, `ninth`) must appear in the fact pack, and every known driver surname or team name must be one the facts mention.
+4. **One retry at temperature 0**, then a plain template sentence built straight from the facts. Nothing unverified is stored.
+5. **Unchanged facts are skipped.** A SHA-256 hash of facts + prompt version + model is stored with each narrative, so re-runs only process new races.
+
+Setup:
+
+```powershell
+# install Ollama for Windows from https://ollama.com, then:
+ollama pull qwen2.5-coder:3b
+```
+
+Run:
+
+```powershell
+python -m f1ml.llm.narrate race_recap --season 2024 --dry-run   # print only
+python -m f1ml.llm.narrate race_recap --season 2024             # write to ml.narratives
+python -m f1ml.llm.narrate driver_season --season 2024 --top 10
+python -m f1ml.llm.narrate prediction --season 2024 --top 20    # needs train --write-back first
+python -m f1ml.llm.narrate model_report
+```
+
+`qwen2.5-coder:3b` is tuned for code, so its prose can read stiffly; `qwen2.5:3b` is the general model at the same size. Compare them with `--model qwen2.5:3b --dry-run` and keep the one whose text you prefer: the verifier keeps both honest.
+
+Read them in SSMS:
+
+```sql
+SELECT n.narrative_type, r.race_label, n.llm_model, n.is_verified, n.narrative_text
+FROM F1_DB2.ml.narratives n
+LEFT JOIN F1_DB2.gold.dim_race r ON r.race_id = n.race_id
+ORDER BY n.narrative_id DESC;
+```
+
 ## Project layout
 
 ```
@@ -99,8 +154,14 @@ f1-analytics-ml/
 │   ├── metrics.py     AUC, PR-AUC, Brier, top-3 hit rate, per-race Spearman, MAE, F1
 │   ├── train.py       tune → test → production fit → reports → write-back
 │   ├── backtest.py    walk-forward evaluation
-│   └── writeback.py   ml.model_runs / ml.predictions inserts
-├── tests/             leakage, split and metric tests (run in CI)
+│   ├── writeback.py   ml.model_runs / ml.predictions inserts
+│   └── llm/
+│       ├── client.py  Ollama chat client
+│       ├── facts.py   fact packs built from gold rows
+│       ├── prompts.py system prompts + template fallback
+│       ├── verify.py  number / name verifier
+│       └── narrate.py CLI: facts -> LLM -> verify -> ml.narratives
+├── tests/             leakage, split, metric and LLM-verifier tests (run in CI)
 └── reports/           generated metrics and model cards
 ```
 
@@ -113,4 +174,4 @@ f1-analytics-ml/
 ## Related
 
 - Warehouse: [SQL_Projects / F1 Data Warehouse](https://github.com/Sahil-Patel180/SQL_Projects/tree/main/F1%20Data%20Warehouse)
-- Next in this repo: local LLM race narratives (Ollama) written to `ml.narratives`.
+- Next: Power BI report on the gold views, `ml.predictions` and `ml.narratives` (Power_BI_Projects).

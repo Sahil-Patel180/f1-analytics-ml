@@ -13,6 +13,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install pandas numpy scikit-learn scipy joblib pytest
+        run: pip install pandas numpy scikit-learn scipy joblib requests pytest
       - name: Test (no database needed)
         run: pytest -q

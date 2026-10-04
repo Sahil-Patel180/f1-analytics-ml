@@ -8,6 +8,8 @@
     DATA_DIR        folder for CSV feature exports (default ./data)
     MODEL_DIR       folder for trained model files (default ./models)
     REPORT_DIR      folder for metrics + model cards (default ./reports)
+    OLLAMA_HOST     default http://localhost:11434
+    OLLAMA_MODEL    default qwen2.5-coder:3b
 """
 from __future__ import annotations
 
@@ -43,6 +45,8 @@ class Settings:
     data_dir: Path = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
     model_dir: Path = Path(os.getenv("MODEL_DIR", PROJECT_ROOT / "models"))
     report_dir: Path = Path(os.getenv("REPORT_DIR", PROJECT_ROOT / "reports"))
+    ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:3b")
 
 
 settings = Settings()
