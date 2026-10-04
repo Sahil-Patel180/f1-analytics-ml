@@ -1,0 +1,472 @@
+{
+  "generated_at": "2026-10-04T08:54:47+00:00",
+  "source": "sql",
+  "results": [
+    {
+      "task": "podium",
+      "description": "Probability that a starter finishes in the top 3.",
+      "target": "target_podium",
+      "kind": "binary",
+      "params": {
+        "learning_rate": 0.08,
+        "max_leaf_nodes": 15
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 5042,
+        "valid": 439,
+        "train_valid": 5481,
+        "test": 912,
+        "current": 322
+      },
+      "test_metrics": {
+        "roc_auc": 0.9247,
+        "pr_auc": 0.7058,
+        "brier": 0.0716,
+        "log_loss": 0.2337,
+        "positive_rate": 0.1513,
+        "top3_hit_rate": 0.6449
+      },
+      "baseline_metrics": {
+        "roc_auc": 0.9107,
+        "pr_auc": 0.6639,
+        "brier": 0.1042,
+        "log_loss": 1.4391,
+        "positive_rate": 0.1513,
+        "top3_hit_rate": 0.6594
+      },
+      "beats_baseline_on": "pr_auc",
+      "top_features": [
+        {
+          "feature": "grid_position",
+          "importance": 0.14896
+        },
+        {
+          "feature": "constructor_points_last5",
+          "importance": 0.03823
+        },
+        {
+          "feature": "quali_position",
+          "importance": 0.03411
+        },
+        {
+          "feature": "driver_avg_finish_last3",
+          "importance": 0.0248
+        },
+        {
+          "feature": "driver_avg_grid_last5",
+          "importance": 0.01267
+        },
+        {
+          "feature": "quali_gap_to_fastest_ms",
+          "importance": 0.00886
+        },
+        {
+          "feature": "champ_position_before",
+          "importance": 0.00804
+        },
+        {
+          "feature": "constructor_best_finish_avg_last5",
+          "importance": 0.00765
+        },
+        {
+          "feature": "driver_career_starts_before",
+          "importance": 0.00315
+        },
+        {
+          "feature": "driver_age_years",
+          "importance": 0.00197
+        }
+      ]
+    },
+    {
+      "task": "finish_position",
+      "description": "Finishing order of the field (position_order, retirements at the back).",
+      "target": "target_finish_position",
+      "kind": "ranking",
+      "params": {
+        "learning_rate": 0.03,
+        "max_leaf_nodes": 31
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 5042,
+        "valid": 439,
+        "train_valid": 5481,
+        "test": 912,
+        "current": 322
+      },
+      "test_metrics": {
+        "spearman_per_race": 0.6999,
+        "mae_places": 3.1513,
+        "winner_hit_rate": 0.5652
+      },
+      "baseline_metrics": {
+        "spearman_per_race": 0.6659,
+        "mae_places": 3.261,
+        "winner_hit_rate": 0.5435
+      },
+      "beats_baseline_on": "spearman_per_race",
+      "top_features": [
+        {
+          "feature": "grid_position",
+          "importance": 0.56032
+        },
+        {
+          "feature": "quali_position",
+          "importance": 0.33245
+        },
+        {
+          "feature": "driver_avg_grid_last5",
+          "importance": 0.13937
+        },
+        {
+          "feature": "driver_career_wins_before",
+          "importance": 0.1315
+        },
+        {
+          "feature": "driver_avg_finish_last5",
+          "importance": 0.07879
+        },
+        {
+          "feature": "driver_points_last5",
+          "importance": 0.07139
+        },
+        {
+          "feature": "constructor_points_last5",
+          "importance": 0.06804
+        },
+        {
+          "feature": "quali_gap_to_fastest_ms",
+          "importance": 0.05905
+        },
+        {
+          "feature": "champ_position_before",
+          "importance": 0.05467
+        },
+        {
+          "feature": "constructor_best_finish_avg_last5",
+          "importance": 0.03827
+        }
+      ]
+    },
+    {
+      "task": "dnf",
+      "description": "Probability that a starter does not finish (not classified, not disqualified).",
+      "target": "target_dnf",
+      "kind": "binary",
+      "params": {
+        "learning_rate": 0.08,
+        "max_leaf_nodes": 31
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 5042,
+        "valid": 439,
+        "train_valid": 5481,
+        "test": 912,
+        "current": 322
+      },
+      "test_metrics": {
+        "roc_auc": 0.5538,
+        "pr_auc": 0.1188,
+        "brier": 0.0943,
+        "log_loss": 0.3374,
+        "positive_rate": 0.0998
+      },
+      "baseline_metrics": {
+        "roc_auc": 0.4951,
+        "pr_auc": 0.0973,
+        "brier": 0.0952,
+        "log_loss": 0.4697,
+        "positive_rate": 0.0998
+      },
+      "beats_baseline_on": "pr_auc",
+      "top_features": [
+        {
+          "feature": "driver_avg_grid_last5",
+          "importance": 0.00794
+        },
+        {
+          "feature": "quali_gap_to_fastest_ms",
+          "importance": 0.00436
+        },
+        {
+          "feature": "grid_position",
+          "importance": 0.00418
+        },
+        {
+          "feature": "driver_avg_finish_last3",
+          "importance": 0.00373
+        },
+        {
+          "feature": "constructor_dnf_rate_last10",
+          "importance": 0.00373
+        },
+        {
+          "feature": "quali_position",
+          "importance": 0.00372
+        },
+        {
+          "feature": "driver_points_last5",
+          "importance": 0.00265
+        },
+        {
+          "feature": "driver_career_starts_before",
+          "importance": 0.0021
+        },
+        {
+          "feature": "driver_circuit_avg_finish_before",
+          "importance": 0.00121
+        },
+        {
+          "feature": "driver_career_wins_before",
+          "importance": 0.00111
+        }
+      ]
+    },
+    {
+      "task": "positions_gained",
+      "description": "Grid position minus finishing position, for classified starters with a grid slot.",
+      "target": "target_positions_gained",
+      "kind": "regression",
+      "params": {
+        "learning_rate": 0.03,
+        "max_leaf_nodes": 15
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 4177,
+        "valid": 366,
+        "train_valid": 4543,
+        "test": 794,
+        "current": 248
+      },
+      "test_metrics": {
+        "mae": 2.25,
+        "rmse": 3.1676,
+        "sign_accuracy": 0.6961
+      },
+      "baseline_metrics": {
+        "mae": 2.8111,
+        "rmse": 3.9432,
+        "sign_accuracy": 0.0
+      },
+      "beats_baseline_on": "mae",
+      "top_features": [
+        {
+          "feature": "grid_position",
+          "importance": 2.33617
+        },
+        {
+          "feature": "constructor_points_last5",
+          "importance": 0.19273
+        },
+        {
+          "feature": "champ_points_before",
+          "importance": 0.10573
+        },
+        {
+          "feature": "quali_gap_to_fastest_ms",
+          "importance": 0.07652
+        },
+        {
+          "feature": "champ_position_before",
+          "importance": 0.06067
+        },
+        {
+          "feature": "driver_podiums_last5",
+          "importance": 0.03456
+        },
+        {
+          "feature": "driver_points_last5",
+          "importance": 0.02696
+        },
+        {
+          "feature": "driver_age_years",
+          "importance": 0.02409
+        },
+        {
+          "feature": "constructor_best_finish_avg_last5",
+          "importance": 0.01985
+        },
+        {
+          "feature": "round",
+          "importance": 0.01481
+        }
+      ]
+    },
+    {
+      "task": "pit_stop_class",
+      "description": "Number of pit stops (0-1, 2, 3+) for classified finishers, 2010 onward.",
+      "target": "target_stop_class",
+      "kind": "multiclass",
+      "params": {
+        "learning_rate": 0.03,
+        "max_leaf_nodes": 31
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 4204,
+        "valid": 376,
+        "train_valid": 4580,
+        "test": 817,
+        "current": 264
+      },
+      "test_metrics": {
+        "macro_f1": 0.4313,
+        "accuracy": 0.4614
+      },
+      "baseline_metrics": {
+        "macro_f1": 0.4549,
+        "accuracy": 0.4786
+      },
+      "beats_baseline_on": null,
+      "top_features": [
+        {
+          "feature": "circuit_avg_stops_prev_edition",
+          "importance": 0.08037
+        },
+        {
+          "feature": "race_laps",
+          "importance": 0.04638
+        },
+        {
+          "feature": "round",
+          "importance": 0.04454
+        },
+        {
+          "feature": "has_sprint",
+          "importance": 0.00983
+        },
+        {
+          "feature": "grid_position",
+          "importance": 0.00649
+        },
+        {
+          "feature": "constructor_avg_stop_ms_last5",
+          "importance": -0.0018
+        }
+      ]
+    },
+    {
+      "task": "pit_stop_ms",
+      "description": "Average pit-lane time per stop in ms (stops over 120 s excluded), 2010 onward.",
+      "target": "target_avg_stop_ms",
+      "kind": "regression",
+      "params": {
+        "learning_rate": 0.08,
+        "max_leaf_nodes": 31
+      },
+      "seasons": {
+        "train": [
+          2010,
+          2021
+        ],
+        "valid": 2022,
+        "test": [
+          2023,
+          2024
+        ],
+        "production_train_to": 2025
+      },
+      "rows": {
+        "train": 4666,
+        "valid": 409,
+        "train_valid": 5075,
+        "test": 851,
+        "current": 288
+      },
+      "test_metrics": {
+        "mae": 2468.8717,
+        "rmse": 4865.3163
+      },
+      "baseline_metrics": {
+        "mae": 3549.2688,
+        "rmse": 5479.2613
+      },
+      "beats_baseline_on": "mae",
+      "top_features": [
+        {
+          "feature": "race_laps",
+          "importance": 977.25521
+        },
+        {
+          "feature": "round",
+          "importance": 75.3917
+        },
+        {
+          "feature": "constructor_avg_stop_ms_last5",
+          "importance": 60.67097
+        },
+        {
+          "feature": "grid_position",
+          "importance": 24.85277
+        },
+        {
+          "feature": "circuit_avg_stops_prev_edition",
+          "importance": 4.31665
+        },
+        {
+          "feature": "has_sprint",
+          "importance": 3.03287
+        }
+      ]
+    }
+  ]
+}
