@@ -1,0 +1,16 @@
+# local settings
+.env
+
+# data exports and trained models (rebuilt by the scripts)
+data/
+models/
+*.joblib
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
