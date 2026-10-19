@@ -9,7 +9,7 @@ flowchart LR
     T --> M["models/*.joblib"]
     T -->|--write-back| W["F1_DB2<br/>ml.model_runs · ml.predictions"]
     W --> PBI["Power BI<br/>predictions vs actual"]
-    G -->|facts| L["f1ml.llm.narrate<br/>Ollama · qwen2.5-coder:3b"]
+    G -->|facts| L["f1ml.llm.narrate<br/>Ollama · qwen2.5:3b"]
     W -->|facts| L
     L -->|verified text| N["F1_DB2<br/>ml.narratives"]
     N --> PBI
@@ -105,10 +105,10 @@ Each `--write-back` adds two runs per model: `eval` (trained to 2022, prediction
 
 ## Local LLM narratives
 
-A small local model (`qwen2.5-coder:3b` via [Ollama](https://ollama.com)) writes short race recaps, driver-season summaries, prediction explanations and model reports. It is never trusted with facts:
+A small local model (`qwen2.5:3b` via [Ollama](https://ollama.com)) writes short race recaps, driver-season summaries, prediction explanations and model reports for **every season from 1950 to the current one**. It is never trusted with facts:
 
 1. **SQL computes every fact.** A JSON *fact pack* is built from the gold views (podium, pole, fastest lap, biggest gain, retirements, ...), already rounded and labelled.
-2. **The model only writes prose** from that JSON, under a strict system prompt.
+2. **The model only writes prose** from that JSON, under a strict system prompt (no invented numbers, no zero stats such as "0 poles", in-progress seasons said to be in progress).
 3. **A verifier checks the text.** Every number (including `P3`, `3rd`, `ninth`) must appear in the fact pack, and every known driver surname or team name must be one the facts mention.
 4. **One retry at temperature 0**, then a plain template sentence built straight from the facts. Nothing unverified is stored.
 5. **Unchanged facts are skipped.** A SHA-256 hash of facts + prompt version + model is stored with each narrative, so re-runs only process new races.
@@ -117,20 +117,33 @@ Setup:
 
 ```powershell
 # install Ollama for Windows from https://ollama.com, then:
-ollama pull qwen2.5-coder:3b
+ollama pull qwen2.5:3b
 ```
+
+Set `OLLAMA_MODEL=qwen2.5:3b` in `.env`.
 
 Run:
 
 ```powershell
-python -m f1ml.llm.narrate race_recap --season 2024 --dry-run   # print only
-python -m f1ml.llm.narrate race_recap --season 2024             # write to ml.narratives
-python -m f1ml.llm.narrate driver_season --season 2024 --top 10
+$env:PYTHONUTF8 = "1"                                            # accented names on the Windows console
+
+python -m f1ml.llm.narrate driver_season --season 2024 --top 3 --dry-run   # print only, nothing written
+python -m f1ml.llm.narrate race_recap --season 2024             # one season, write to ml.narratives
+python -m f1ml.llm.narrate driver_season --season 2024 --top 10 # top 10 of the standings only
 python -m f1ml.llm.narrate prediction --season 2024 --top 20    # needs train --write-back first
 python -m f1ml.llm.narrate model_report
 ```
 
-`qwen2.5-coder:3b` is tuned for code, so its prose can read stiffly; `qwen2.5:3b` is the general model at the same size. Compare them with `--model qwen2.5:3b --dry-run` and keep the one whose text you prefer: the verifier keeps both honest.
+Full history (newest season first, logged; `& { }` lets PowerShell pipe a loop):
+
+```powershell
+& { foreach ($y in 2026..1950) { python -m f1ml.llm.narrate driver_season --season $y } } *>&1 | Tee-Object narr_driver.log
+& { foreach ($y in 2026..1950) { python -m f1ml.llm.narrate race_recap    --season $y } } *>&1 | Tee-Object narr_race.log
+```
+
+Every narrative is committed as soon as it is written, so a run can be stopped (Ctrl+C) and restarted: subjects whose fact hash is already stored are skipped. A 3B model on a laptop takes roughly 5–15 s per narrative, so the full history is an overnight job. After each new race, re-run `--season <current year>`: only narratives whose facts changed are regenerated, and Power BI loads the latest one per driver-season / race.
+
+`qwen2.5:3b` replaced the first choice, `qwen2.5-coder:3b`, whose prose read stiffly ("finished 0 poles"). Try another model with `--model <name> --dry-run`; the verifier keeps any model honest. Changing the model or `PROMPT_VERSION` (currently `v2`) changes the hash, so the next run regenerates everything.
 
 Read them in SSMS:
 
@@ -139,6 +152,14 @@ SELECT n.narrative_type, r.race_label, n.llm_model, n.is_verified, n.narrative_t
 FROM F1_DB2.ml.narratives n
 LEFT JOIN F1_DB2.gold.dim_race r ON r.race_id = n.race_id
 ORDER BY n.narrative_id DESC;
+
+-- coverage per type and season, and how often the template fallback was needed
+SELECT narrative_type, season_year, COUNT(*) AS narratives,
+       SUM(CASE WHEN llm_model = 'template-fallback' THEN 1 ELSE 0 END) AS fallback
+FROM F1_DB2.ml.narratives
+WHERE prompt_version = 'v2'
+GROUP BY narrative_type, season_year
+ORDER BY narrative_type, season_year DESC;
 ```
 
 ## Project layout
@@ -170,8 +191,9 @@ f1-analytics-ml/
 - Predictions exist only for races already in the warehouse. A race with no result row yet has no grid or qualifying in the feature view, so upcoming races are not scored.
 - Pit-stop strategy depends heavily on safety cars and weather, which are not features yet (planned: FastF1 / Meteostat enrichment for 2018+).
 - Global feature importance is permutation-based; per-prediction explanations (SHAP) are not included.
+- The narrative verifier checks that every number and name exists in the facts, not how it is used: a teammate's points total can still be phrased as a gap. Narratives are short summaries, not analysis.
 
 ## Related
 
 - Warehouse: [SQL_Projects / F1 Data Warehouse](https://github.com/Sahil-Patel180/SQL_Projects/tree/main/F1%20Data%20Warehouse)
-- Next: Power BI report on the gold views, `ml.predictions` and `ml.narratives` (Power_BI_Projects).
+- Report: [Power_BI_Projects / F1 Race Analytics](https://github.com/Sahil-Patel180/Power_BI_Projects/tree/main/F1%20Race%20Analytics) shows the predictions next to the actual results and the narratives on the Driver Profile and Race Detail pages.
