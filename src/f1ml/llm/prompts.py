@@ -1,13 +1,14 @@
 """System prompts per narrative type. Bump PROMPT_VERSION when any prompt changes:
 it is part of the fact-pack hash, so changed prompts regenerate their narratives."""
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 _RULES = """Rules you must follow:
 - Use ONLY the facts in the JSON the user sends. Do not add any number, date, name, cause, quote or opinion that is not in it.
 - Copy numbers exactly as written in the JSON (keep '1:27.452', '64%'). Never calculate new numbers.
 - Write positions as digits with a P prefix when helpful (P1, P3), never as words.
 - If a fact is missing, leave it out. Never guess.
+- Skip any statistic whose value is 0. Never write '0 wins', '0 podiums' or 'finished 0 poles'.
 - Plain English, past tense, no headings, no bullet points, no emojis.
 - Output only the paragraph."""
 
